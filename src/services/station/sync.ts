@@ -1,5 +1,7 @@
 import { z } from "zod"
 import { logger } from "../../commons/utils/log"
+import { db, dbSchema } from "../../db"
+import { sql } from "drizzle-orm"
 
 export const sync = async () => {
   logger.info("[SYNC][STATION] Syncing station data started")
@@ -26,9 +28,33 @@ export const sync = async () => {
 
     const parsed = schema.parse(res)
 
-    logger.info(`[SYNC][STATION] Total ${parsed.data.length} fetched`)
+    const filterdStation = parsed.data.filter((d) => !d.sta_id.includes("WIL"))
 
-    return parsed.data
+    const insert = await db
+      .insert(dbSchema.station)
+      .values(
+        filterdStation.map((s) => {
+          return {
+            id: s.sta_id,
+            name: s.sta_name,
+            fgEnable: s.fg_enable,
+            daop: s.group_wil === 0 ? 1 : s.group_wil,
+          }
+        }),
+      )
+      .onConflictDoUpdate({
+        target: dbSchema.station.id,
+        set: {
+          updatedAt: new Date().toISOString(),
+          id: sql`excluded.id`,
+          name: sql`excluded.name`,
+          daop: sql`excluded.daop`,
+        },
+      })
+      .returning()
+
+    logger.info(`[SYNC][STATION] Inserted ${insert.length} rows`)
+    logger.info("[SYNC][STATION] Syncing station data finished")
   } catch (error) {
     logger.error("[SYNC][STATION] Error", error)
   }

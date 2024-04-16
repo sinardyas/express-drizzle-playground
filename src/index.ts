@@ -13,7 +13,7 @@ app.use(express.json())
 
 const v1: Router = express.Router()
 v1.get("/ping", (req: Request, res: Response) => res.json({ message: "pong!" }))
-v1.use("/station", controller)
+v1.use(controller)
 
 app.use("/v1", v1)
 

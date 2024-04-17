@@ -1,8 +1,8 @@
-import { sql } from "drizzle-orm"
-import { SyncItem, SyncType } from "../../commons/types"
-import { db, dbSchema } from "../../db"
-import { NewSync } from "../../db/schema"
-import { onError } from "../../commons/utils/error"
+import { sql } from "drizzle-orm";
+import type { SyncItem, SyncType } from "../../commons/types";
+import { onError } from "../../commons/utils/error";
+import { db, dbSchema } from "../../db";
+import type { NewSync } from "../../db/schema";
 
 export const sync =
   (
@@ -11,8 +11,8 @@ export const sync =
       item,
       type,
     }: {
-      item: SyncItem
-      type: SyncType
+      item: SyncItem;
+      type: SyncType;
     },
   ) =>
   async () => {
@@ -22,17 +22,17 @@ export const sync =
         item,
         type,
       })
-      .returning({ id: dbSchema.sync.id, n: dbSchema.sync.n })
+      .returning({ id: dbSchema.sync.id, n: dbSchema.sync.n });
 
-    const initialPayload = start[0]
-    const startTime = performance.now()
+    const initialPayload = start[0];
+    const startTime = performance.now();
 
     fn()
       .then(async () => {
         const payload: Partial<NewSync> = {
           ...initialPayload,
           status: "SUCCESS",
-        }
+        };
         await db
           .insert(dbSchema.sync)
           .values(payload)
@@ -41,16 +41,16 @@ export const sync =
             set: {
               status: sql`excluded.status`,
             },
-          })
+          });
       })
       .catch(async (e) => {
-        const error = onError(e)
+        const error = onError(e);
 
         const payload: Partial<NewSync> = {
           ...initialPayload,
           status: "FAILED",
           message: error,
-        }
+        };
 
         await db
           .insert(dbSchema.sync)
@@ -61,17 +61,17 @@ export const sync =
               status: sql`excluded.status`,
               message: sql`excluded.message`,
             },
-          })
+          });
       })
       .finally(async () => {
-        const endTime = performance.now()
-        const duration = Math.ceil(endTime - startTime)
+        const endTime = performance.now();
+        const duration = Math.ceil(endTime - startTime);
 
         const payload: Partial<NewSync> = {
           ...initialPayload,
           endedAt: new Date().toISOString(),
           duration,
-        }
+        };
 
         await db
           .insert(dbSchema.sync)
@@ -82,13 +82,13 @@ export const sync =
               endedAt: sql`excluded.ended_at`,
               duration: sql`excluded.duration`,
             },
-          })
-      })
+          });
+      });
 
     return {
       id: initialPayload.id,
       type,
       item,
       status: "PENDING",
-    }
-  }
+    };
+  };

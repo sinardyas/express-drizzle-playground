@@ -1,11 +1,11 @@
-import { Router } from "express"
+import { Router } from "express";
 
-import station from "./station"
-import schedule from "./schedule"
+import schedule from "./schedule";
+import station from "./station";
 
-const router = Router()
+const router = Router();
 
-router.use("/station", station)
-router.use("/schedule", schedule)
+router.use("/station", station);
+router.use("/schedule", schedule);
 
-export default router
+export default router;

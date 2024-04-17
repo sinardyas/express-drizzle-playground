@@ -1,19 +1,19 @@
-import { eq, sql } from "drizzle-orm"
-import { db, dbSchema } from "../../db"
-import { parseTime } from "../../commons/utils/date"
-import { logger } from "../../commons/utils/log"
-import { z } from "zod"
-import { NewStation } from "../../db/schema"
-import { onError } from "../../commons/utils/error"
-import sleep from "../../commons/utils/sleep"
+import { eq, sql } from "drizzle-orm";
+import { z } from "zod";
+import { parseTime } from "../../commons/utils/date";
+import { onError } from "../../commons/utils/error";
+import { logger } from "../../commons/utils/log";
+import sleep from "../../commons/utils/sleep";
+import { db, dbSchema } from "../../db";
+import type { NewStation } from "../../db/schema";
 
 export const syncItem = async (id: string) => {
   try {
     const req = await fetch(
       `https://api-partner.krl.co.id/krlweb/v1/schedule?stationid=${id}&timefrom=00:00&timeto=24:00`,
-    ).then((res) => res.json())
+    ).then((res) => res.json());
 
-    logger.info(`[SYNC][SCHEDULE][${id}] Fetched data from API`)
+    logger.info(`[SYNC][SCHEDULE][${id}] Fetched data from API`);
 
     const schema = z.object({
       status: z.number(),
@@ -28,26 +28,21 @@ export const syncItem = async (id: string) => {
           dest_time: z.string(),
         }),
       ),
-    })
+    });
 
     if ((req as unknown as { status: number }).status === 404) {
-      logger.warn(`[SYNC][SCHEDULE][${id}] No schedule data found`)
+      logger.warn(`[SYNC][SCHEDULE][${id}] No schedule data found`);
 
       const payload: Partial<NewStation> = {
         haveSchedule: false,
         updatedAt: new Date().toISOString(),
-      }
+      };
 
-      await db
-        .update(dbSchema.station)
-        .set(payload)
-        .where(eq(dbSchema.station.id, id))
+      await db.update(dbSchema.station).set(payload).where(eq(dbSchema.station.id, id));
 
-      logger.warn(
-        `[SYNC][SCHEDULE][${id}] Updated station schedule availability status`,
-      )
+      logger.warn(`[SYNC][SCHEDULE][${id}] Updated station schedule availability status`);
     } else if ((req as unknown as { status: number }).status === 200) {
-      const parsedData = schema.parse(req)
+      const parsedData = schema.parse(req);
 
       const insert = await db
         .insert(dbSchema.schedule)
@@ -63,7 +58,7 @@ export const syncItem = async (id: string) => {
               timeEstimated: parseTime(d.time_est).toLocaleTimeString(),
               destinationTime: parseTime(d.dest_time).toLocaleTimeString(),
               color: d.color,
-            }
+            };
           }),
         )
         .onConflictDoUpdate({
@@ -75,31 +70,29 @@ export const syncItem = async (id: string) => {
             updatedAt: new Date().toISOString(),
           },
         })
-        .returning()
+        .returning();
 
-      logger.info(`[SYNC][SCHEDULE][${id}] Inserted ${insert.length} rows`)
+      logger.info(`[SYNC][SCHEDULE][${id}] Inserted ${insert.length} rows`);
     } else {
       logger.error(
-        `[SYNC][SCHEDULE][${id}] Error fetch schedule data. Trace: ${JSON.stringify(
-          req,
-        )}`,
-      )
-      throw new Error("Failed to fetch schedule data for: " + id)
+        `[SYNC][SCHEDULE][${id}] Error fetch schedule data. Trace: ${JSON.stringify(req)}`,
+      );
+      throw new Error(`Failed to fetch schedule data for: ${id}`);
     }
   } catch (e) {
-    throw new Error(onError(e))
+    throw new Error(onError(e));
   }
-}
+};
 
 export const sync = async () => {
-  const stationsQuery = await db.query.station.findMany()
+  const stationsQuery = await db.query.station.findMany();
 
-  const initialStations = await stationsQuery.map(({ id }) => id)
+  const initialStations = await stationsQuery.map(({ id }) => id);
 
   if (initialStations.length === 0) {
-    const err = "No station data is existing. Please sync station data first."
-    logger.error("[SYNC][SCHEDULE] " + err)
-    throw new Error(err)
+    const err = "No station data is existing. Please sync station data first.";
+    logger.error(`[SYNC][SCHEDULE] ${err}`);
+    throw new Error(err);
   }
 
   const blacklistQuery = await db
@@ -107,34 +100,32 @@ export const sync = async () => {
       id: dbSchema.station.id,
     })
     .from(dbSchema.station)
-    .where(eq(dbSchema.station.haveSchedule, false))
+    .where(eq(dbSchema.station.haveSchedule, false));
 
-  const blacklist = await blacklistQuery.map(({ id }) => id)
+  const blacklist = await blacklistQuery.map(({ id }) => id);
 
   const stations =
-    blacklist.length > 0
-      ? initialStations.filter((s) => !blacklist.includes(s))
-      : initialStations
+    blacklist.length > 0 ? initialStations.filter((s) => !blacklist.includes(s)) : initialStations;
 
   try {
-    logger.info("[SYNC][SCHEDULE] Syncing schedule data started")
-    const batchSizes = 5
-    const totalBatches = Math.ceil(stations.length / batchSizes)
+    logger.info("[SYNC][SCHEDULE] Syncing schedule data started");
+    const batchSizes = 5;
+    const totalBatches = Math.ceil(stations.length / batchSizes);
 
     for (let i = 0; i < totalBatches; i++) {
-      const start = i * batchSizes
-      const end = start + batchSizes
-      const batch = stations.slice(start, end)
+      const start = i * batchSizes;
+      const end = start + batchSizes;
+      const batch = stations.slice(start, end);
 
       await Promise.allSettled(
         batch.map(async (id) => {
-          await sleep(3000)
-          await syncItem(id)
+          await sleep(3000);
+          await syncItem(id);
         }),
-      )
+      );
     }
-    logger.info("[SYNC][SCHEDULE] Syncing schedule data finished")
+    logger.info("[SYNC][SCHEDULE] Syncing schedule data finished");
   } catch (e) {
-    throw new Error(onError(e))
+    throw new Error(onError(e));
   }
-}
+};

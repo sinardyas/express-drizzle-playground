@@ -1,4 +1,4 @@
-import pino from "pino"
+import pino from "pino";
 
 const transport = pino.transport({
   targets: [
@@ -16,6 +16,6 @@ const transport = pino.transport({
       options: {},
     },
   ],
-})
+});
 
-export const logger = pino({}, transport)
+export const logger = pino({}, transport);

@@ -1,3 +1,3 @@
-export type SyncType = "manual" | "cron"
+export type SyncType = "manual" | "cron";
 
-export type SyncItem = "station" | "schedule"
+export type SyncItem = "station" | "schedule";

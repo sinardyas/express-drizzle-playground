@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm"
+import { sql } from "drizzle-orm";
 import {
   bigint,
   bigserial,
@@ -11,7 +11,7 @@ import {
   text,
   time,
   uuid,
-} from "drizzle-orm/pg-core"
+} from "drizzle-orm/pg-core";
 
 export const schedule = pgTable(
   "schedule",
@@ -31,11 +31,11 @@ export const schedule = pgTable(
     return {
       stationIdx: index("station_idx").on(table.stationId),
       timeEstimatedIdx: index("time_estimated_idx").on(table.timeEstimated),
-    }
+    };
   },
-)
+);
 
-export type Schedule = typeof schedule.$inferSelect
+export type Schedule = typeof schedule.$inferSelect;
 
 export const station = pgTable("station", {
   id: text("id").primaryKey().unique(),
@@ -44,19 +44,15 @@ export const station = pgTable("station", {
   fgEnable: integer("fg_enable").default(sql`NULL`),
   haveSchedule: boolean("have_schedule").default(sql`true`),
   updatedAt: text("updated_at").default(sql`(CURRENT_TIMESTAMP)`),
-})
+});
 
-export type Station = typeof station.$inferSelect
-export type NewStation = typeof station.$inferInsert
+export type Station = typeof station.$inferSelect;
+export type NewStation = typeof station.$inferInsert;
 
-export const syncFromEnum = pgEnum("sync_from", ["cron", "manual"])
-export const syncStatusEnum = pgEnum("sync_status", [
-  "PENDING",
-  "SUCCESS",
-  "FAILED",
-])
+export const syncFromEnum = pgEnum("sync_from", ["cron", "manual"]);
+export const syncStatusEnum = pgEnum("sync_status", ["PENDING", "SUCCESS", "FAILED"]);
 
-export const syncItemEnum = pgEnum("sync_item", ["station", "schedule"])
+export const syncItemEnum = pgEnum("sync_item", ["station", "schedule"]);
 
 export const sync = pgTable("sync", {
   id: uuid("id").defaultRandom().primaryKey().unique(),
@@ -71,6 +67,6 @@ export const sync = pgTable("sync", {
   startedAt: text("started_at").default(sql`(CURRENT_TIMESTAMP)`),
   endedAt: text("ended_at").default(sql`NULL`),
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`),
-})
+});
 
-export type NewSync = typeof sync.$inferInsert
+export type NewSync = typeof sync.$inferInsert;

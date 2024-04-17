@@ -1,17 +1,17 @@
-import { z } from "zod"
-import { logger } from "../../commons/utils/log"
-import { db, dbSchema } from "../../db"
-import { sql } from "drizzle-orm"
+import { sql } from "drizzle-orm";
+import { z } from "zod";
+import { logger } from "../../commons/utils/log";
+import { db, dbSchema } from "../../db";
 
 export const sync = async () => {
-  logger.info("[SYNC][STATION] Syncing station data started")
+  logger.info("[SYNC][STATION] Syncing station data started");
 
   try {
-    const res = await fetch(
-      "https://api-partner.krl.co.id/krlweb/v1/krl-station",
-    ).then((res) => res.json())
+    const res = await fetch("https://api-partner.krl.co.id/krlweb/v1/krl-station").then((res) =>
+      res.json(),
+    );
 
-    logger.info("[SYNC][STATION] Fetched data from API")
+    logger.info("[SYNC][STATION] Fetched data from API");
 
     const schema = z.object({
       status: z.number(),
@@ -24,11 +24,11 @@ export const sync = async () => {
           fg_enable: z.number(),
         }),
       ),
-    })
+    });
 
-    const parsed = schema.parse(res)
+    const parsed = schema.parse(res);
 
-    const filterdStation = parsed.data.filter((d) => !d.sta_id.includes("WIL"))
+    const filterdStation = parsed.data.filter((d) => !d.sta_id.includes("WIL"));
 
     const insert = await db
       .insert(dbSchema.station)
@@ -39,7 +39,7 @@ export const sync = async () => {
             name: s.sta_name,
             fgEnable: s.fg_enable,
             daop: s.group_wil === 0 ? 1 : s.group_wil,
-          }
+          };
         }),
       )
       .onConflictDoUpdate({
@@ -51,11 +51,11 @@ export const sync = async () => {
           daop: sql`excluded.daop`,
         },
       })
-      .returning()
+      .returning();
 
-    logger.info(`[SYNC][STATION] Inserted ${insert.length} rows`)
-    logger.info("[SYNC][STATION] Syncing station data finished")
+    logger.info(`[SYNC][STATION] Inserted ${insert.length} rows`);
+    logger.info("[SYNC][STATION] Syncing station data finished");
   } catch (error) {
-    logger.error("[SYNC][STATION] Error", error)
+    logger.error("[SYNC][STATION] Error", error);
   }
-}
+};

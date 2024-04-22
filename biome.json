@@ -2,7 +2,7 @@
   "$schema": "https://biomejs.dev/schemas/1.7.0/schema.json",
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["node_modules/**", "**/*.json", "**/dist"]
+    "ignore": ["node_modules/**", "**/*.json", "**/dist", "**/coverage"]
   },
   "organizeImports": {
     "enabled": true

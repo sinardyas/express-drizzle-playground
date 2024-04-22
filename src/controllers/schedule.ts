@@ -1,4 +1,4 @@
-import { type Request, type Response, Router } from "express";
+import { type Request, RequestHandler, type Response, Router } from "express";
 import type { SyncType } from "../commons/types";
 import { schedule } from "../services/schedule";
 

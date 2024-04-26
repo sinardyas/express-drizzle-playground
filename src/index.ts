@@ -1,21 +1,26 @@
 import "dotenv/config";
 
 import express from "express";
-import type { Express, Request, Response, Router } from "express";
+import type { Express } from "express";
 import helmet from "helmet";
 
+import apiV1Router from "./api/index.route";
 import { logger } from "./commons/utils/log";
-import controller from "./controllers";
+import errorHandleMiddleware from "./middlewares/error-handler.middleware";
 
 const app: Express = express();
+
 app.use(helmet());
+
+// parse body request
 app.use(express.json());
 
-const v1: Router = express.Router();
-v1.get("/ping", (_req: Request, res: Response) => res.json({ message: "pong!" }));
-v1.use(controller);
+// parse urlencoded request
+app.use(express.urlencoded({ extended: true }));
 
-app.use("/v1", v1);
+app.use("/v1", apiV1Router);
+
+app.use(errorHandleMiddleware);
 
 const port = process.env.APP_PORT ?? 3001;
 app.listen(port, () => logger.info(`[MAIN] App listen to ${port}`));

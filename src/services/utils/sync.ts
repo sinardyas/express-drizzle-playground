@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
+import { onError } from "../../commons/errors/error";
 import type { SyncItem, SyncType } from "../../commons/types";
-import { onError } from "../../commons/utils/error";
 import { db, dbSchema } from "../../db";
 import type { NewSync } from "../../db/schema";
 

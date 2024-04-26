@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
+import { onError } from "../../commons/errors/error";
 import Cache from "../../commons/utils/cache";
-import { onError } from "../../commons/utils/error";
 import { db, dbSchema } from "../../db";
 
 export const getAll = async () => {

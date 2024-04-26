@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { onError } from "../../commons/errors/error";
 import { parseTime } from "../../commons/utils/date";
-import { onError } from "../../commons/utils/error";
 import { logger } from "../../commons/utils/log";
 import sleep from "../../commons/utils/sleep";
 import { db, dbSchema } from "../../db";
